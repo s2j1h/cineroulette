@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Ciné-Roulette{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('dvd.list_dvd') }}">🎬 Ciné-Roulette</a>
+    <nav>
+      <a href="{{ url_for('dvd.list_dvd') }}">Collection</a>
+      <a href="{{ url_for('dvd.scan_page') }}">Scanner</a>
+      <a href="{{ url_for('dvd.new_dvd') }}">Ajouter</a>
+      <a href="{{ url_for('roulette.roulette_page') }}">🎲 Roulette</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+          {% for category, message in messages %}
+            <li class="flash flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

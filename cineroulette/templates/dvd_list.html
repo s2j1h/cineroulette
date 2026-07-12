@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Collection – Ciné-Roulette{% endblock %}
+{% block content %}
+<h1>Ma collection</h1>
+
+<div class="toolbar">
+  <input type="search" id="search-input" placeholder="Rechercher un titre..." value="{{ q }}">
+
+  <div class="filters" id="filters">
+    <div class="filter-group" data-filter="couleur">
+      <span class="filter-label">Couleur :</span>
+      {% for c in couleurs %}
+        <button type="button" class="pastille-btn {{ 'active' if couleur == c else '' }}" data-value="{{ c }}" style="--pastille-color: {{ couleur_hex[c] }};" title="{{ c }}"></button>
+      {% endfor %}
+      <button type="button" class="chip-clear {{ 'active' if not couleur else '' }}" data-value="">Toutes</button>
+    </div>
+
+    {% if themes %}
+    <div class="filter-group" data-filter="theme">
+      <label for="theme-select" class="filter-label">Thème :</label>
+      <select id="theme-select">
+        <option value="">Tous</option>
+        {% for t in themes %}
+          <option value="{{ t }}" {{ 'selected' if theme == t else '' }}>{{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div id="dvd-grid">
+  {% include "_dvd_grid.html" %}
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('dvd.list_dvd', page=pagination.prev_num, q=q, couleur=couleur, theme=theme) }}">← Précédent</a>
+  {% endif %}
+  <span>Page {{ pagination.page }} / {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('dvd.list_dvd', page=pagination.next_num, q=q, couleur=couleur, theme=theme) }}">Suivant →</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}

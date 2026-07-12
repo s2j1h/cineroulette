@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Ciné-Roulette{% endblock %}
+{% block content %}
+<h1>🎲 Ciné-Roulette</h1>
+
+<div id="roulette-result" class="roulette-result empty">
+  <p class="placeholder-text">Cliquez sur « Film au hasard » pour démarrer !</p>
+</div>
+
+<p id="roulette-message" class="roulette-message" hidden></p>
+
+<div class="roulette-actions">
+  <button type="button" id="btn-random" class="btn btn-primary">🎲 Film au hasard</button>
+  <button type="button" id="btn-same-color" class="btn" hidden>🎨 Un autre de la même couleur</button>
+  <button type="button" id="btn-same-theme" class="btn" hidden>🎬 Un autre du même genre</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/roulette.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Modifier' if mode == 'edit' else 'Ajouter' }} un DVD – Ciné-Roulette{% endblock %}
+{% block content %}
+{% set v_ean = form_data.get('ean', dvd.ean if dvd else '') %}
+{% set v_titre_fr = form_data.get('titre_fr', dvd.titre_fr if dvd else '') %}
+{% set v_titre_en = form_data.get('titre_en', dvd.titre_en if dvd else '') %}
+{% set v_resume = form_data.get('resume', dvd.resume if dvd else '') %}
+{% set v_theme = form_data.get('theme', dvd.theme if dvd else '') %}
+{% set v_annee = form_data.get('annee', dvd.annee if dvd else '') %}
+{% set v_note_imdb = form_data.get('note_imdb', dvd.note_imdb if dvd else '') %}
+{% set v_couleur = form_data.get('couleur', dvd.couleur if dvd else '') %}
+{% set v_jaquette_url = form_data.get('jaquette_url', '') %}
+
+<h1>{{ 'Modifier' if mode == 'edit' else 'Ajouter un DVD' }}</h1>
+
+<form method="post" enctype="multipart/form-data" class="dvd-form">
+  <label>Code-barre (EAN)
+    <input type="text" name="ean" value="{{ v_ean or '' }}">
+  </label>
+
+  <label>Titre français *
+    <input type="text" name="titre_fr" value="{{ v_titre_fr or '' }}" required>
+  </label>
+
+  <label>Titre anglais / original
+    <input type="text" name="titre_en" value="{{ v_titre_en or '' }}">
+  </label>
+
+  <label>Résumé
+    <textarea name="resume" rows="4">{{ v_resume or '' }}</textarea>
+  </label>
+
+  <div class="form-row">
+    <label>Thème / genre
+      <input type="text" name="theme" value="{{ v_theme or '' }}" placeholder="Action, Drame...">
+    </label>
+    <label>Année
+      <input type="number" name="annee" value="{{ v_annee or '' }}" min="1900" max="2100">
+    </label>
+    <label>Note IMDb
+      <input type="number" name="note_imdb" value="{{ v_note_imdb or '' }}" step="0.1" min="0" max="10">
+    </label>
+  </div>
+
+  <fieldset class="couleur-choice">
+    <legend>Couleur *</legend>
+    {% for c in couleurs %}
+    <label class="pastille-radio">
+      <input type="radio" name="couleur" value="{{ c }}" {{ 'checked' if v_couleur == c else '' }} required>
+      <span class="pastille" style="--pastille-color: {{ couleur_hex[c] }};"></span>
+      {{ c }}
+    </label>
+    {% endfor %}
+  </fieldset>
+
+  <label>Jaquette (URL à télécharger)
+    <input type="url" name="jaquette_url" value="{{ v_jaquette_url }}" placeholder="https://...">
+  </label>
+  <label>ou jaquette (fichier à téléverser)
+    <input type="file" name="jaquette_file" accept="image/*">
+  </label>
+  {% if dvd and dvd.jaquette_path %}
+    <p class="current-cover">Jaquette actuelle : <img src="{{ url_for('static', filename=dvd.jaquette_path) }}" alt=""></p>
+  {% endif %}
+
+  {% if not dvd %}
+  <div class="manual-search">
+    <label for="tmdb-query">Recherche rapide TMDB (optionnel, pré-remplit le formulaire)
+      <input type="text" id="tmdb-query" placeholder="Rechercher un titre sur TMDB...">
+    </label>
+    <div id="tmdb-results"></div>
+  </div>
+  {% endif %}
+
+  <button type="submit" class="btn btn-primary">{{ 'Enregistrer les modifications' if mode == 'edit' else 'Ajouter à la collection' }}</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+{% if not dvd %}
+<script src="{{ url_for('static', filename='js/tmdb_search.js') }}"></script>
+{% endif %}
+{% endblock %}

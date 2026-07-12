@@ -1,0 +1,10 @@
+.venv
+venv
+__pycache__
+*.pyc
+.git
+.env
+logs/*
+instance/*
+cineroulette/static/covers/*
+!cineroulette/static/covers/.gitkeep

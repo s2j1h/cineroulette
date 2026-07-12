@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ dvd.titre_fr }} – Ciné-Roulette{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="detail-cover">
+    {% if dvd.jaquette_path %}
+      <img src="{{ url_for('static', filename=dvd.jaquette_path) }}" alt="Jaquette de {{ dvd.titre_fr }}">
+    {% else %}
+      <div class="cover-placeholder large">🎞️</div>
+    {% endif %}
+  </div>
+  <div class="detail-info">
+    <span class="pastille" style="--pastille-color: {{ couleur_hex[dvd.couleur] }};" title="{{ dvd.couleur }}"></span>
+    <h1>{{ dvd.titre_fr }}</h1>
+    {% if dvd.titre_en and dvd.titre_en != dvd.titre_fr %}<p class="subtitle">{{ dvd.titre_en }}</p>{% endif %}
+    <p class="tags">
+      {% if dvd.annee %}<span class="tag">{{ dvd.annee }}</span>{% endif %}
+      {% if dvd.theme %}<span class="tag">{{ dvd.theme }}</span>{% endif %}
+      {% if dvd.note_imdb %}<span class="tag">⭐ {{ dvd.note_imdb }}/10</span>{% endif %}
+      {% if dvd.ean %}<span class="tag">EAN {{ dvd.ean }}</span>{% endif %}
+    </p>
+    {% if dvd.resume %}<p class="resume">{{ dvd.resume }}</p>{% endif %}
+    <p class="added">Ajouté le {{ dvd.date_ajout.strftime("%d/%m/%Y") }}</p>
+
+    <div class="actions">
+      <a class="btn" href="{{ url_for('dvd.edit_dvd', dvd_id=dvd.id) }}">Modifier</a>
+      <form method="post" action="{{ url_for('dvd.delete_dvd', dvd_id=dvd.id) }}" onsubmit="return confirm('Supprimer « {{ dvd.titre_fr }} » de la collection ?');" class="inline-form">
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

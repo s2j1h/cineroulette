@@ -1,0 +1,13 @@
+services:
+  cine-roulette:
+    build: .
+    container_name: cine-roulette
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      - ./instance:/app/instance
+      - ./cineroulette/static/covers:/app/cineroulette/static/covers
+      - ./logs:/app/logs
+    restart: unless-stopped

@@ -1,0 +1,24 @@
+{% if dvds %}
+<div class="grid">
+  {% for dvd in dvds %}
+  <a class="card" href="{{ url_for('dvd.detail', dvd_id=dvd.id) }}">
+    <div class="card-cover">
+      {% if dvd.jaquette_path %}
+        <img src="{{ url_for('static', filename=dvd.jaquette_path) }}" alt="Jaquette de {{ dvd.titre_fr }}" loading="lazy">
+      {% else %}
+        <div class="cover-placeholder">🎞️</div>
+      {% endif %}
+      <span class="pastille" style="--pastille-color: {{ couleur_hex[dvd.couleur] }};" title="{{ dvd.couleur }}"></span>
+    </div>
+    <div class="card-body">
+      <h3>{{ dvd.titre_fr }}</h3>
+      <p class="meta">{% if dvd.annee %}{{ dvd.annee }}{% endif %}{% if dvd.theme %} · {{ dvd.theme }}{% endif %}</p>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty-state">
+  {% if q %}Aucun DVD ne correspond à « {{ q }} ».{% else %}Aucun DVD dans cette catégorie pour l'instant.{% endif %}
+</p>
+{% endif %}

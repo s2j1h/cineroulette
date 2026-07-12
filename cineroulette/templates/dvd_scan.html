@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Scanner un DVD – Ciné-Roulette{% endblock %}
+{% block content %}
+<h1>Scanner un code-barre</h1>
+
+<div class="quota-badge">
+  Quota DVDFr : {{ quota_status.count }}/{{ quota_status.weekly_quota }} utilisées cette semaine
+  ({{ quota_status.remaining }} restantes) · {{ quota_status.resets_remaining }} reset(s) manuel(s) restant(s)
+  <form method="post" action="{{ url_for('dvd.reset_quota') }}" onsubmit="return confirm('Remettre le compteur de quota DVDFr à zéro ?');" class="inline-form">
+    <button type="submit" class="btn-link">réinitialiser</button>
+  </form>
+</div>
+
+{% if not enrichment %}
+<div id="reader" class="scan-reader"></div>
+<p id="scan-status" class="scan-status">Placez le code-barre du DVD face à la caméra.</p>
+
+<form id="ean-form" method="post" action="{{ url_for('dvd.scan_page') }}">
+  <input type="hidden" name="ean" id="ean-input">
+</form>
+
+<p class="manual-fallback">
+  Le scan ne fonctionne pas ? <a href="{{ url_for('dvd.new_dvd') }}">Ajoutez le film manuellement</a>.
+</p>
+{% else %}
+<h2>Résultat de l'enrichissement</h2>
+<p class="source-tag">Source : {{ enrichment.source or 'aucune (à compléter manuellement)' }}</p>
+
+<form method="post" action="{{ url_for('dvd.new_dvd') }}" enctype="multipart/form-data" class="dvd-form">
+  <input type="hidden" name="ean" value="{{ enrichment.ean }}">
+  <input type="hidden" name="jaquette_url" value="{{ enrichment.jaquette_url or '' }}">
+
+  <label>Titre français *
+    <input type="text" name="titre_fr" value="{{ enrichment.titre_fr or '' }}" required>
+  </label>
+  <label>Titre anglais / original
+    <input type="text" name="titre_en" value="{{ enrichment.titre_en or '' }}">
+  </label>
+  <label>Résumé
+    <textarea name="resume" rows="4">{{ enrichment.resume or '' }}</textarea>
+  </label>
+  <div class="form-row">
+    <label>Thème / genre
+      <input type="text" name="theme" value="{{ enrichment.theme or '' }}">
+    </label>
+    <label>Année
+      <input type="number" name="annee" value="{{ enrichment.annee or '' }}" min="1900" max="2100">
+    </label>
+    <label>Note IMDb
+      <input type="number" name="note_imdb" value="{{ enrichment.note_imdb or '' }}" step="0.1" min="0" max="10">
+    </label>
+  </div>
+
+  {% if enrichment.jaquette_url %}
+    <p class="current-cover">Jaquette trouvée : <img src="{{ enrichment.jaquette_url }}" alt=""></p>
+  {% endif %}
+
+  <fieldset class="couleur-choice">
+    <legend>Couleur *</legend>
+    {% for c in couleurs %}
+    <label class="pastille-radio">
+      <input type="radio" name="couleur" value="{{ c }}" required>
+      <span class="pastille" style="--pastille-color: {{ couleur_hex[c] }};"></span>
+      {{ c }}
+    </label>
+    {% endfor %}
+  </fieldset>
+
+  <button type="submit" class="btn btn-primary">Ajouter à la collection</button>
+</form>
+
+<p><a href="{{ url_for('dvd.scan_page') }}">← Scanner un autre DVD</a></p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if not enrichment %}
+<script src="{{ url_for('static', filename='js/html5-qrcode.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/scan.js') }}"></script>
+{% endif %}
+{% endblock %}
