@@ -4,7 +4,7 @@ from pathlib import Path
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 
 from ..models import Dvd, db
-from ..services import covers, dvdfr, omdb, quota, tmdb
+from ..services import covers, omdb, quota, tmdb, upcitemdb
 
 logger = logging.getLogger(__name__)
 
@@ -204,19 +204,22 @@ def _enrich_from_ean(ean):
         "note_imdb": None,
         "jaquette_url": None,
         "source": None,
+        "titre_recherche": None,
     }
 
-    dvdfr_data = dvdfr.lookup_by_ean(ean)
+    barcode_data = upcitemdb.lookup_by_ean(ean)
     titre_query = None
-    if dvdfr_data:
-        result["titre_fr"] = dvdfr_data.get("titre_fr")
-        result["jaquette_url"] = dvdfr_data.get("jaquette_url")
-        result["annee"] = dvdfr_data.get("annee")
-        result["source"] = "dvdfr"
-        titre_query = dvdfr_data.get("titre_fr")
+    if barcode_data:
+        # Titre provisoire (souvent générique/anglais) : sert de requête pour TMDB
+        # ci-dessous, qui fournira le vrai titre français s'il trouve une correspondance.
+        result["titre_fr"] = barcode_data.get("titre")
+        result["jaquette_url"] = barcode_data.get("jaquette_url")
+        result["source"] = "upcitemdb"
+        titre_query = upcitemdb.clean_title_for_search(barcode_data.get("titre"))
+        result["titre_recherche"] = titre_query
     else:
         flash(
-            "EAN non trouvé via DVDFr (quota dépassé ou fiche absente) — "
+            "EAN non trouvé via UPCitemdb (quota dépassé ou fiche absente) — "
             "recherchez le titre manuellement ci-dessous.",
             "warning",
         )
@@ -226,10 +229,11 @@ def _enrich_from_ean(ean):
         if candidates:
             detail = tmdb.get_movie_detail(candidates[0]["id"])
             if detail:
-                result["titre_en"] = result["titre_en"] or detail.get("titre_en")
-                result["resume"] = result["resume"] or detail.get("resume")
-                result["theme"] = result["theme"] or detail.get("theme")
-                result["annee"] = result["annee"] or detail.get("annee")
+                result["titre_fr"] = detail.get("titre_fr") or result["titre_fr"]
+                result["titre_en"] = detail.get("titre_en") or result["titre_en"]
+                result["resume"] = detail.get("resume") or result["resume"]
+                result["theme"] = detail.get("theme") or result["theme"]
+                result["annee"] = detail.get("annee") or result["annee"]
                 result["jaquette_url"] = result["jaquette_url"] or detail.get("jaquette_url")
                 imdb_id = tmdb.get_external_ids(detail["tmdb_id"])
                 if imdb_id:
@@ -254,28 +258,14 @@ def scan_page():
         enrichment = _enrich_from_ean(ean)
         return render_template(
             "dvd_scan.html",
-            quota_status=quota.get_status("dvdfr"),
+            quota_status=quota.get_status("upcitemdb"),
             enrichment=enrichment,
             couleurs=couleurs,
         )
 
     return render_template(
-        "dvd_scan.html", quota_status=quota.get_status("dvdfr"), enrichment=None, couleurs=couleurs
+        "dvd_scan.html", quota_status=quota.get_status("upcitemdb"), enrichment=None, couleurs=couleurs
     )
-
-
-@dvd_bp.route("/quota/reset", methods=["POST"])
-def reset_quota():
-    ok, status = quota.manual_reset("dvdfr")
-    if ok:
-        flash(
-            f"Compteur de quota DVDFr remis à zéro ({status['resets_used']}/"
-            f"{status['resets_used'] + status['resets_remaining']} resets manuels utilisés).",
-            "success",
-        )
-    else:
-        flash("Nombre maximal de resets manuels du quota DVDFr déjà atteint.", "error")
-    return redirect(url_for("dvd.scan_page"))
 
 
 @dvd_bp.route("/tmdb_search")

@@ -49,13 +49,8 @@ class Dvd(db.Model):
 
 
 class QuotaCounter(db.Model):
-    """Suivi local (applicatif) de la consommation du quota DVDFr.
-
-    Le reset "manuel" ne fait qu'annuler notre propre compteur local ; il ne
-    contacte pas DVDFr (le reset réel se fait sur leur site, cf. §4.2 du cahier
-    des charges). resets_used sert juste de rappel visuel du nombre de resets
-    déjà consommés sur les 5 autorisés.
-    """
+    """Suivi local (applicatif) de la consommation du quota UPCitemdb (tier
+    gratuit, ~100 requêtes/jour par IP)."""
 
     __tablename__ = "quota_counter"
 
@@ -63,5 +58,4 @@ class QuotaCounter(db.Model):
     service = db.Column(db.String(50), unique=True, nullable=False)
     count = db.Column(db.Integer, nullable=False, default=0)
     period_start = db.Column(db.DateTime, nullable=False, default=utcnow)
-    resets_used = db.Column(db.Integer, nullable=False, default=0)
     updated_at = db.Column(db.DateTime, nullable=False, default=utcnow, onupdate=utcnow)

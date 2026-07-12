@@ -1,16 +1,16 @@
 # Ciné-Roulette
 
 Application web personnelle de gestion d'une collection de DVD/Blu-ray : ajout par
-scan de code-barre avec enrichissement automatique des métadonnées (DVDFr → TMDB →
-OMDb), catégorisation par couleur, recherche, et une fonctionnalité de découverte
-aléatoire ("roulette").
+scan de code-barre avec enrichissement automatique des métadonnées (UPCitemdb →
+TMDB → OMDb), catégorisation par couleur, recherche, et une fonctionnalité de
+découverte aléatoire ("roulette").
 
 Usage prévu : mono-utilisateur, sur un homelab local (LXC Proxmox ou Docker),
 accessible en réseau local ou via WireGuard.
 
 > **Note** : cette application a été développée avec [Claude Code](https://claude.com/claude-code)
 > et relue/vérifiée par un humain (tests fonctionnels manuels de toutes les
-> routes : CRUD, recherche, filtres, roulette, scan, quota DVDFr). Comme pour
+> routes : CRUD, recherche, filtres, roulette, scan, quota UPCitemdb). Comme pour
 > tout code généré assisté par IA, une relecture reste recommandée avant toute
 > exposition au-delà d'un usage personnel en réseau local.
 
@@ -21,7 +21,7 @@ accessible en réseau local ou via WireGuard.
 - Frontend : Jinja2 (rendu serveur) + CSS + JS vanilla
 - Scan code-barre : [html5-qrcode](https://github.com/mebjas/html5-qrcode) (vendorisé
   localement dans `cineroulette/static/js/`, pas de dépendance CDN au runtime)
-- Intégrations externes : DVDFr (identification par EAN), TMDB (métadonnées),
+- Intégrations externes : UPCitemdb (identification par EAN), TMDB (métadonnées),
   OMDb (note IMDb)
 
 Aucune authentification n'est implémentée (usage mono-utilisateur, réseau local).
@@ -34,15 +34,14 @@ Aucune authentification n'est implémentée (usage mono-utilisateur, réseau loc
 - **Fiche DVD** (`/dvd/<id>`) : détail complet, jaquette, modification, suppression
   (avec confirmation).
 - **Ajout par scan** (`/dvd/scan`) : scan caméra de l'EAN → enrichissement
-  automatique DVDFr → TMDB → OMDb → formulaire pré-rempli à valider.
+  automatique UPCitemdb → TMDB → OMDb → formulaire pré-rempli à valider.
 - **Ajout manuel** (`/dvd/new`) : formulaire vierge, avec recherche rapide TMDB par
-  titre en fallback (si le DVD n'est pas trouvé sur DVDFr, ou pour tout ajout sans
-  code-barre).
+  titre en fallback (si le DVD n'est pas trouvé sur UPCitemdb, ou pour tout ajout
+  sans code-barre).
 - **Ciné-Roulette** (`/roulette`) : tirage aléatoire d'un DVD, avec rebond possible
   sur la même couleur ou le même genre que le film tiré.
-- **Quota DVDFr** : compteur visible sur la page de scan (200 requêtes/semaine),
-  avec reset manuel (jusqu'à 5 fois) et avertissement dans les logs sous 20
-  requêtes restantes.
+- **Quota UPCitemdb** : compteur visible sur la page de scan (~100 requêtes/jour,
+  tier gratuit), avec avertissement dans les logs sous 10 requêtes restantes.
 - **Logs** : fichier `logs/app.log` avec rotation, format
   `timestamp | niveau | module | message`.
 
@@ -66,26 +65,29 @@ dossier `logs/` sont créés automatiquement au premier lancement.
 
 ## Clés API
 
-Trois clés sont nécessaires pour l'enrichissement automatique. L'application reste
-utilisable sans elles (ajout manuel toujours disponible), mais chaque intégration
-absente est simplement ignorée (avec un `WARNING` dans les logs).
+Deux clés sont nécessaires (TMDB, OMDb). UPCitemdb ne demande **aucune clé** en
+usage normal (tier gratuit "trial"). L'application reste utilisable sans les
+clés (ajout manuel toujours disponible), mais chaque intégration absente est
+simplement ignorée (avec un `WARNING` dans les logs).
 
 | Variable | Où l'obtenir | Note |
 |---|---|---|
-| `DVDFR_API_KEY` | [dvdfr.com/api](https://www.dvdfr.com/api) | Inscription requise. Quota 200 req/semaine. |
-| `TMDB_API_KEY` | [themoviedb.org](https://www.themoviedb.org/) → paramètres → API | Gratuit, formulaire décrivant l'usage de l'app. |
-| `OMDB_API_KEY` | [omdbapi.com](https://www.omdbapi.com/apikey.aspx) | Gratuit, 1000 req/jour. |
+| `UPCITEMDB_API_KEY` | [upcitemdb.com](https://www.upcitemdb.com/) | Optionnel : laisser vide pour le tier gratuit (~100 req/jour, sans inscription). Ne renseigner que si tu passes à leur offre PRO payante. |
+| `TMDB_API_KEY` | [themoviedb.org](https://www.themoviedb.org/) → paramètres → API | Gratuit, formulaire décrivant l'usage de l'app. Utiliser la **clé API (v3 auth)**, pas le jeton v4. |
+| `OMDB_API_KEY` | [omdbapi.com](https://www.omdbapi.com/apikey.aspx) | Gratuit, 1000 req/jour. Activation par lien reçu par email. |
 
 Copier `.env.example` vers `.env` et renseigner les valeurs. `.env` n'est jamais
 versionné (voir `.gitignore`).
 
-> **Note d'implémentation** : l'API DVDFr (`productlist.php`) n'a pas de
-> documentation publique stable ; le format exact des paramètres d'authentification
-> et de la réponse peut varier selon les comptes. Le module
-> [`cineroulette/services/dvdfr.py`](cineroulette/services/dvdfr.py) parse la
-> réponse de façon défensive (plusieurs formes de JSON acceptées) et journalise un
-> `WARNING` si un champ attendu n'est pas reconnu — à ajuster si le format constaté
-> diffère une fois une vraie clé en main.
+> **Note d'implémentation** : UPCitemdb est une base de codes-barres générique
+> (tout produit, pas seulement les films), donc le titre renvoyé est souvent le
+> nom commercial du produit (parfois en anglais) plutôt qu'un titre français
+> éditorial. Le pipeline s'appuie sur ce titre uniquement comme requête de
+> recherche TMDB ; le titre français final vient de TMDB s'il trouve une
+> correspondance. Le module
+> [`cineroulette/services/upcitemdb.py`](cineroulette/services/upcitemdb.py) parse
+> la réponse de façon défensive et journalise un `WARNING` si un champ attendu
+> n'est pas reconnu.
 
 ## Lancer avec Docker
 
@@ -163,13 +165,13 @@ l'application (voir section suivante).
 ```
 cineroulette/
 ├── config.py              # configuration (clés API, chemins, couleurs valides)
-├── models.py               # modèle Dvd + compteur de quota DVDFr
+├── models.py               # modèle Dvd + compteur de quota UPCitemdb
 ├── routes/
 │   ├── dvd.py               # CRUD, scan, recherche manuelle TMDB
 │   └── roulette.py          # page roulette + /random
 ├── services/
-│   ├── dvdfr.py, tmdb.py, omdb.py   # intégrations externes
-│   ├── quota.py             # suivi local du quota DVDFr
+│   ├── upcitemdb.py, tmdb.py, omdb.py   # intégrations externes
+│   ├── quota.py             # suivi local du quota UPCitemdb
 │   └── covers.py            # téléchargement/conversion des jaquettes
 ├── templates/                # Jinja2
 └── static/

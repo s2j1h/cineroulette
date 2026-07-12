@@ -57,7 +57,7 @@ def create_app(config_class=Config):
 
     with app.app_context():
         db.create_all()
-        for service in ("dvdfr",):
+        for service in ("upcitemdb",):
             if not QuotaCounter.query.filter_by(service=service).first():
                 db.session.add(QuotaCounter(service=service))
         db.session.commit()

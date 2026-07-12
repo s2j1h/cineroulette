@@ -15,13 +15,12 @@ class Config:
     COVERS_DIR = BASE_DIR / "cineroulette" / "static" / "covers"
     LOGS_DIR = BASE_DIR / "logs"
 
-    DVDFR_API_KEY = os.environ.get("DVDFR_API_KEY", "")
+    UPCITEMDB_API_KEY = os.environ.get("UPCITEMDB_API_KEY", "")
     TMDB_API_KEY = os.environ.get("TMDB_API_KEY", "")
     OMDB_API_KEY = os.environ.get("OMDB_API_KEY", "")
 
-    DVDFR_WEEKLY_QUOTA = 200
-    DVDFR_QUOTA_WARNING_THRESHOLD = 20
-    DVDFR_MAX_MANUAL_RESETS = 5
+    UPCITEMDB_DAILY_QUOTA = 100
+    UPCITEMDB_QUOTA_WARNING_THRESHOLD = 10
 
     DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 

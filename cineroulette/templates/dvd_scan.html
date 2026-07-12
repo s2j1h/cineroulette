@@ -4,11 +4,8 @@
 <h1>Scanner un code-barre</h1>
 
 <div class="quota-badge">
-  Quota DVDFr : {{ quota_status.count }}/{{ quota_status.weekly_quota }} utilisées cette semaine
-  ({{ quota_status.remaining }} restantes) · {{ quota_status.resets_remaining }} reset(s) manuel(s) restant(s)
-  <form method="post" action="{{ url_for('dvd.reset_quota') }}" onsubmit="return confirm('Remettre le compteur de quota DVDFr à zéro ?');" class="inline-form">
-    <button type="submit" class="btn-link">réinitialiser</button>
-  </form>
+  Quota UPCitemdb : {{ quota_status.count }}/{{ quota_status.daily_quota }} utilisées aujourd'hui
+  ({{ quota_status.remaining }} restantes)
 </div>
 
 {% if not enrichment %}
@@ -55,6 +52,13 @@
     <p class="current-cover">Jaquette trouvée : <img src="{{ enrichment.jaquette_url }}" alt=""></p>
   {% endif %}
 
+  <div class="manual-search">
+    <label for="tmdb-query">Pas le bon film ? Corrige la recherche TMDB
+      <input type="text" id="tmdb-query" value="{{ enrichment.titre_recherche or '' }}" placeholder="Rechercher un titre sur TMDB...">
+    </label>
+    <div id="tmdb-results"></div>
+  </div>
+
   <fieldset class="couleur-choice">
     <legend>Couleur *</legend>
     {% for c in couleurs %}
@@ -77,5 +81,7 @@
 {% if not enrichment %}
 <script src="{{ url_for('static', filename='js/html5-qrcode.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/scan.js') }}"></script>
+{% else %}
+<script src="{{ url_for('static', filename='js/tmdb_search.js') }}"></script>
 {% endif %}
 {% endblock %}

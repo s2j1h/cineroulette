@@ -37,20 +37,22 @@
           .join("");
 
         resultsEl.querySelectorAll(".tmdb-candidate").forEach((card) => {
-          card.addEventListener("click", () => pick(card.dataset.id));
+          card.addEventListener("click", () => pick(card));
         });
       })
       .catch((err) => console.error("Erreur recherche TMDB", err));
   }
 
-  function pick(movieId) {
-    fetch(`/dvd/tmdb_pick?movie_id=${movieId}`)
+  function pick(card) {
+    fetch(`/dvd/tmdb_pick?movie_id=${card.dataset.id}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) {
           console.error(data.error);
           return;
         }
+        resultsEl.querySelectorAll(".tmdb-candidate").forEach((c) => c.classList.remove("selected"));
+        card.classList.add("selected");
         fillForm(data);
       })
       .catch((err) => console.error("Erreur sélection TMDB", err));
@@ -79,4 +81,10 @@
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(search, 350);
   });
+
+  // Pré-rempli (ex: depuis le scan) : lance la recherche tout de suite, sans
+  // attendre une saisie, pour afficher les candidats sans action de l'utilisateur.
+  if (queryInput.value.trim()) {
+    search();
+  }
 })();

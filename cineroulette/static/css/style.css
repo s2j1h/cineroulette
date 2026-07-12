@@ -423,6 +423,10 @@ h1 {
 .tmdb-candidate:hover {
   border-color: var(--accent);
 }
+.tmdb-candidate.selected {
+  border-color: var(--success);
+  border-width: 2px;
+}
 .tmdb-candidate p {
   margin: 0.3rem 0.4rem;
 }
