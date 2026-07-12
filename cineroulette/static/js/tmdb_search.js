@@ -75,6 +75,9 @@
     });
     const urlField = form.querySelector('[name="jaquette_url"]');
     if (urlField && data.jaquette_url) urlField.value = data.jaquette_url;
+
+    const tmdbIdField = form.querySelector('[name="tmdb_id"]');
+    if (tmdbIdField && data.tmdb_id) tmdbIdField.value = data.tmdb_id;
   }
 
   queryInput.addEventListener("input", () => {

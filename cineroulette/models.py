@@ -11,11 +11,21 @@ def utcnow():
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
+def parse_themes(theme):
+    """Le champ theme reste une simple chaîne "Action, Aventure, ..." en base
+    (pas de table de genres normalisée), mais est manipulé comme une liste de
+    hashtags indépendants partout où on l'affiche ou le filtre."""
+    if not theme:
+        return []
+    return [t.strip() for t in theme.split(",") if t.strip()]
+
+
 class Dvd(db.Model):
     __tablename__ = "dvd"
 
     id = db.Column(db.Integer, primary_key=True)
     ean = db.Column(db.String(13), unique=True, nullable=True)
+    tmdb_id = db.Column(db.Integer, nullable=True)
     titre_fr = db.Column(db.String(255), nullable=False)
     titre_en = db.Column(db.String(255), nullable=True)
     resume = db.Column(db.Text, nullable=True)

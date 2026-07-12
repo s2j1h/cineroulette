@@ -1,9 +1,10 @@
 import logging
+from collections import Counter
 from pathlib import Path
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 
-from ..models import Dvd, db
+from ..models import Dvd, db, parse_themes
 from ..services import covers, omdb, quota, tmdb, upcitemdb
 
 logger = logging.getLogger(__name__)
@@ -39,13 +40,45 @@ def _filtered_query(q, couleur, theme):
     if couleur:
         query = query.filter(Dvd.couleur == couleur)
     if theme:
-        query = query.filter(Dvd.theme == theme)
+        # theme est un hashtag isolé (ex: "Action") au sein du champ theme qui
+        # peut en contenir plusieurs ("Action, Aventure, ..."). Le vocabulaire
+        # de genres TMDB ne contient pas de sous-chaînes ambiguës entre tags,
+        # une correspondance partielle insensible à la casse suffit donc.
+        query = query.filter(Dvd.theme.ilike(f"%{theme}%"))
     return query.order_by(Dvd.titre_fr)
 
 
 def _known_themes():
-    rows = db.session.query(Dvd.theme).filter(Dvd.theme.isnot(None)).distinct().order_by(Dvd.theme)
-    return [row[0] for row in rows if row[0]]
+    """Retourne les hashtags distincts de la collection avec leur nombre
+    d'occurrences, triés par ordre alphabétique."""
+    rows = db.session.query(Dvd.theme).filter(Dvd.theme.isnot(None))
+    counter = Counter()
+    for (theme_str,) in rows:
+        counter.update(parse_themes(theme_str))
+    return sorted(counter.items())
+
+
+def _find_duplicate(ean=None, tmdb_id=None, exclude_id=None):
+    """Détecte un doublon. L'EAN identifie un exemplaire physique précis (deux
+    éditions différentes du même film ont des EAN différents et ne sont donc
+    pas des doublons). En l'absence d'EAN (ajout manuel via recherche TMDB),
+    le tmdb_id sert de repli pour éviter d'ajouter deux fois le même film."""
+    if ean:
+        query = Dvd.query.filter_by(ean=ean)
+        if exclude_id is not None:
+            query = query.filter(Dvd.id != exclude_id)
+        found = query.first()
+        if found:
+            return found
+        return None
+
+    if tmdb_id:
+        query = Dvd.query.filter_by(tmdb_id=tmdb_id)
+        if exclude_id is not None:
+            query = query.filter(Dvd.id != exclude_id)
+        return query.first()
+
+    return None
 
 
 @dvd_bp.route("", strict_slashes=False)
@@ -103,6 +136,8 @@ def new_dvd():
     form = request.form
     titre_fr = form.get("titre_fr", "").strip()
     couleur = form.get("couleur")
+    ean = form.get("ean", "").strip() or None
+    tmdb_id = _parse_int(form.get("tmdb_id"))
 
     errors = []
     if not titre_fr:
@@ -110,13 +145,21 @@ def new_dvd():
     if couleur not in couleurs:
         errors.append("Merci de choisir une couleur valide.")
 
+    duplicate = _find_duplicate(ean, tmdb_id)
+    if duplicate:
+        errors.append(
+            f"Ce film est déjà dans la collection : « {duplicate.titre_fr} », ajouté "
+            f"le {duplicate.date_ajout.strftime('%d/%m/%Y')}."
+        )
+
     if errors:
         for message in errors:
             flash(message, "error")
         return render_template("dvd_form.html", dvd=None, couleurs=couleurs, mode="new", form_data=form), 400
 
     dvd = Dvd(
-        ean=form.get("ean", "").strip() or None,
+        ean=ean,
+        tmdb_id=tmdb_id,
         titre_fr=titre_fr,
         titre_en=form.get("titre_en", "").strip() or None,
         resume=form.get("resume", "").strip() or None,
@@ -147,6 +190,7 @@ def edit_dvd(dvd_id):
     form = request.form
     titre_fr = form.get("titre_fr", "").strip()
     couleur = form.get("couleur")
+    ean = form.get("ean", "").strip() or None
 
     errors = []
     if not titre_fr:
@@ -154,12 +198,19 @@ def edit_dvd(dvd_id):
     if couleur not in couleurs:
         errors.append("Merci de choisir une couleur valide.")
 
+    duplicate = _find_duplicate(ean, exclude_id=dvd.id)
+    if duplicate:
+        errors.append(
+            f"Un autre DVD porte déjà cet EAN dans la collection : « {duplicate.titre_fr} » "
+            f"(EAN {ean})."
+        )
+
     if errors:
         for message in errors:
             flash(message, "error")
         return render_template("dvd_form.html", dvd=dvd, couleurs=couleurs, mode="edit", form_data=form), 400
 
-    dvd.ean = form.get("ean", "").strip() or None
+    dvd.ean = ean
     dvd.titre_fr = titre_fr
     dvd.titre_en = form.get("titre_en", "").strip() or None
     dvd.resume = form.get("resume", "").strip() or None
@@ -205,6 +256,7 @@ def _enrich_from_ean(ean):
         "jaquette_url": None,
         "source": None,
         "titre_recherche": None,
+        "tmdb_id": None,
     }
 
     barcode_data = upcitemdb.lookup_by_ean(ean)
@@ -235,6 +287,7 @@ def _enrich_from_ean(ean):
                 result["theme"] = detail.get("theme") or result["theme"]
                 result["annee"] = detail.get("annee") or result["annee"]
                 result["jaquette_url"] = result["jaquette_url"] or detail.get("jaquette_url")
+                result["tmdb_id"] = detail.get("tmdb_id")
                 imdb_id = tmdb.get_external_ids(detail["tmdb_id"])
                 if imdb_id:
                     result["note_imdb"] = omdb.get_rating(imdb_id)
@@ -255,16 +308,35 @@ def scan_page():
             return redirect(url_for("dvd.scan_page"))
 
         logger.info("Scan EAN reçu : %s", ean)
+
+        duplicate = _find_duplicate(ean)
+        if duplicate:
+            logger.info(
+                "Scan EAN %s : déjà dans la collection (id=%s titre=%s)", ean, duplicate.id, duplicate.titre_fr
+            )
+            return render_template(
+                "dvd_scan.html",
+                quota_status=quota.get_status("upcitemdb"),
+                enrichment=None,
+                duplicate=duplicate,
+                couleurs=couleurs,
+            )
+
         enrichment = _enrich_from_ean(ean)
         return render_template(
             "dvd_scan.html",
             quota_status=quota.get_status("upcitemdb"),
             enrichment=enrichment,
+            duplicate=None,
             couleurs=couleurs,
         )
 
     return render_template(
-        "dvd_scan.html", quota_status=quota.get_status("upcitemdb"), enrichment=None, couleurs=couleurs
+        "dvd_scan.html",
+        quota_status=quota.get_status("upcitemdb"),
+        enrichment=None,
+        duplicate=None,
+        couleurs=couleurs,
     )
 
 

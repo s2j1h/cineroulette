@@ -15,10 +15,14 @@
     {% if dvd.titre_en and dvd.titre_en != dvd.titre_fr %}<p class="subtitle">{{ dvd.titre_en }}</p>{% endif %}
     <p class="tags">
       {% if dvd.annee %}<span class="tag">{{ dvd.annee }}</span>{% endif %}
-      {% if dvd.theme %}<span class="tag">{{ dvd.theme }}</span>{% endif %}
       {% if dvd.note_imdb %}<span class="tag">⭐ {{ dvd.note_imdb }}/10</span>{% endif %}
       {% if dvd.ean %}<span class="tag">EAN {{ dvd.ean }}</span>{% endif %}
     </p>
+    {% if dvd.theme %}
+    <p class="hashtags">
+      {% for tag in dvd.theme|theme_list %}<a class="hashtag" href="{{ url_for('dvd.list_dvd', theme=tag) }}">#{{ tag }}</a>{% endfor %}
+    </p>
+    {% endif %}
     {% if dvd.resume %}<p class="resume">{{ dvd.resume }}</p>{% endif %}
     <p class="added">Ajouté le {{ dvd.date_ajout.strftime("%d/%m/%Y") }}</p>
 

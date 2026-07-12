@@ -16,14 +16,12 @@
     </div>
 
     {% if themes %}
-    <div class="filter-group" data-filter="theme">
-      <label for="theme-select" class="filter-label">Thème :</label>
-      <select id="theme-select">
-        <option value="">Tous</option>
-        {% for t in themes %}
-          <option value="{{ t }}" {{ 'selected' if theme == t else '' }}>{{ t }}</option>
-        {% endfor %}
-      </select>
+    <div class="filter-group hashtag-filters" data-filter="theme">
+      <span class="filter-label">Hashtags :</span>
+      <button type="button" class="chip-clear {{ 'active' if not theme else '' }}" data-value="">Tous</button>
+      {% for t, count in themes %}
+        <button type="button" class="hashtag-btn {{ 'active' if theme == t else '' }}" data-value="{{ t }}">#{{ t }} <span class="hashtag-count">{{ count }}</span></button>
+      {% endfor %}
     </div>
     {% endif %}
   </div>

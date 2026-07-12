@@ -64,6 +64,7 @@
   {% endif %}
 
   {% if not dvd %}
+  <input type="hidden" name="tmdb_id" value="{{ form_data.get('tmdb_id', '') }}">
   <div class="manual-search">
     <label for="tmdb-query">Recherche rapide TMDB (optionnel, pré-remplit le formulaire)
       <input type="text" id="tmdb-query" placeholder="Rechercher un titre sur TMDB...">

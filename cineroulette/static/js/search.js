@@ -15,9 +15,9 @@
     if (activeColor && activeColor.dataset.value) {
       params.set("couleur", activeColor.dataset.value);
     }
-    const themeSelect = document.getElementById("theme-select");
-    if (themeSelect && themeSelect.value) {
-      params.set("theme", themeSelect.value);
+    const activeTheme = filters ? filters.querySelector(".hashtag-btn.active") : null;
+    if (activeTheme && activeTheme.dataset.value) {
+      params.set("theme", activeTheme.dataset.value);
     }
     return params;
   }
@@ -42,17 +42,14 @@
   }
 
   if (filters) {
-    filters.querySelectorAll(".pastille-btn, .chip-clear").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        filters.querySelectorAll(".pastille-btn, .chip-clear").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
-        refresh();
+    filters.querySelectorAll(".filter-group").forEach((group) => {
+      group.querySelectorAll(".pastille-btn, .hashtag-btn, .chip-clear").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          group.querySelectorAll(".pastille-btn, .hashtag-btn, .chip-clear").forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          refresh();
+        });
       });
     });
-
-    const themeSelect = document.getElementById("theme-select");
-    if (themeSelect) {
-      themeSelect.addEventListener("change", refresh);
-    }
   }
 })();

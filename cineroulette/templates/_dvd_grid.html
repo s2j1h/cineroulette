@@ -12,7 +12,12 @@
     </div>
     <div class="card-body">
       <h3>{{ dvd.titre_fr }}</h3>
-      <p class="meta">{% if dvd.annee %}{{ dvd.annee }}{% endif %}{% if dvd.theme %} · {{ dvd.theme }}{% endif %}</p>
+      {% if dvd.annee %}<p class="meta">{{ dvd.annee }}</p>{% endif %}
+      {% if dvd.theme %}
+      <p class="meta-tags">
+        {% for tag in dvd.theme|theme_list %}<span class="hashtag">#{{ tag }}</span>{% endfor %}
+      </p>
+      {% endif %}
     </div>
   </a>
   {% endfor %}

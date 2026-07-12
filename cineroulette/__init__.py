@@ -12,7 +12,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 from flask import Flask
 
 from .config import Config
-from .models import db, QuotaCounter
+from .models import db, parse_themes, QuotaCounter
 
 
 def setup_logging(app):
@@ -67,6 +67,8 @@ def create_app(config_class=Config):
 
     app.register_blueprint(dvd_bp)
     app.register_blueprint(roulette_bp)
+
+    app.jinja_env.filters["theme_list"] = parse_themes
 
     @app.route("/")
     def index():

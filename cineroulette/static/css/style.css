@@ -145,12 +145,48 @@ h1 {
   color: white;
   border-color: var(--accent);
 }
-#theme-select {
-  padding: 0.4rem 0.6rem;
-  border-radius: var(--radius);
+.hashtag-filters {
+  max-width: 100%;
+}
+.hashtag-btn {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
   border: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.hashtag-btn:hover {
+  border-color: var(--accent);
   color: var(--text);
+}
+.hashtag-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.hashtag-count {
+  font-size: 0.75rem;
+  opacity: 0.75;
+}
+.hashtag {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--accent);
+  margin-right: 0.3rem;
+}
+a.hashtag {
+  text-decoration: none;
+}
+a.hashtag:hover {
+  text-decoration: underline;
+}
+.hashtags {
+  margin: 0 0 0.75rem;
 }
 
 /* --- Grid --- */
@@ -214,6 +250,13 @@ h1 {
   margin: 0;
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+.card-body .meta-tags {
+  margin: 0.25rem 0 0;
+  line-height: 1.4;
+}
+.card-body .meta-tags .hashtag {
+  font-size: 0.75rem;
 }
 .empty-state {
   color: var(--text-muted);

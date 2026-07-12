@@ -15,6 +15,13 @@
     return div.innerHTML;
   }
 
+  function themeTags(theme) {
+    return theme
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+  }
+
   function renderFilm(dvd) {
     current = dvd;
     messageEl.hidden = true;
@@ -33,9 +40,9 @@
           ${dvd.titre_en && dvd.titre_en !== dvd.titre_fr ? `<p class="subtitle">${escapeHtml(dvd.titre_en)}</p>` : ""}
           <p class="tags">
             ${dvd.annee ? `<span class="tag">${escapeHtml(dvd.annee)}</span>` : ""}
-            ${dvd.theme ? `<span class="tag">${escapeHtml(dvd.theme)}</span>` : ""}
             ${dvd.note_imdb ? `<span class="tag">⭐ ${escapeHtml(dvd.note_imdb)}/10</span>` : ""}
           </p>
+          ${dvd.theme ? `<p class="hashtags">${themeTags(dvd.theme).map((t) => `<span class="hashtag">#${escapeHtml(t)}</span>`).join("")}</p>` : ""}
           ${dvd.resume ? `<p class="resume">${escapeHtml(dvd.resume)}</p>` : ""}
           <p><a href="/dvd/${dvd.id}">Voir la fiche complète →</a></p>
         </div>
@@ -81,8 +88,10 @@
 
   btnTheme.addEventListener("click", () => {
     if (!current || !current.theme) return;
+    const tags = themeTags(current.theme);
+    if (!tags.length) return;
     const params = new URLSearchParams();
-    params.set("theme", current.theme);
+    params.set("theme", tags[0]);
     params.set("exclude", current.id);
     draw(params);
   });

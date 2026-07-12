@@ -22,7 +22,9 @@ def random_dvd():
 
     query = Dvd.query
     if theme:
-        query = query.filter(Dvd.theme == theme)
+        # theme est un hashtag isolé au sein du champ theme (qui peut en
+        # contenir plusieurs, ex: "Action, Aventure, ...").
+        query = query.filter(Dvd.theme.ilike(f"%{theme}%"))
     if couleur:
         query = query.filter(Dvd.couleur == couleur)
     if exclude:
@@ -33,7 +35,7 @@ def random_dvd():
     if not dvd:
         total_query = Dvd.query
         if theme:
-            total_query = total_query.filter(Dvd.theme == theme)
+            total_query = total_query.filter(Dvd.theme.ilike(f"%{theme}%"))
         if couleur:
             total_query = total_query.filter(Dvd.couleur == couleur)
         total_count = total_query.count()
