@@ -8,6 +8,12 @@ aléatoire ("roulette").
 Usage prévu : mono-utilisateur, sur un homelab local (LXC Proxmox ou Docker),
 accessible en réseau local ou via WireGuard.
 
+> **Note** : cette application a été développée avec [Claude Code](https://claude.com/claude-code)
+> et relue/vérifiée par un humain (tests fonctionnels manuels de toutes les
+> routes : CRUD, recherche, filtres, roulette, scan, quota DVDFr). Comme pour
+> tout code généré assisté par IA, une relecture reste recommandée avant toute
+> exposition au-delà d'un usage personnel en réseau local.
+
 ## Stack
 
 - Backend : Python 3.12 + Flask
