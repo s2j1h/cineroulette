@@ -4,11 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Ciné-Roulette{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}">
+  <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('dvd.list_dvd') }}">🎬 Ciné-Roulette</a>
+    <a class="brand" href="{{ url_for('dvd.list_dvd') }}">
+      <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" class="brand-icon">
+      Ciné-Roulette
+    </a>
     <nav>
       <a href="{{ url_for('dvd.list_dvd') }}">Collection</a>
       <a href="{{ url_for('dvd.scan_page') }}">Scanner</a>

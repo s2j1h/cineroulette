@@ -43,9 +43,18 @@ a:hover {
   gap: 0.5rem;
 }
 .topbar .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--text);
+}
+.brand-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: block;
 }
 .topbar nav {
   display: flex;
