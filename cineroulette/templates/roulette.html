@@ -4,7 +4,7 @@
 <h1>🎲 Ciné-Roulette</h1>
 
 <div id="roulette-result" class="roulette-result empty">
-  <p class="placeholder-text">Cliquez sur « Film au hasard » pour démarrer !</p>
+  <p class="placeholder-text">Tirage en cours...</p>
 </div>
 
 <p id="roulette-message" class="roulette-message" hidden></p>
@@ -12,7 +12,11 @@
 <div class="roulette-actions">
   <button type="button" id="btn-random" class="btn btn-primary">🎲 Film au hasard</button>
   <button type="button" id="btn-same-color" class="btn" hidden>🎨 Un autre de la même couleur</button>
-  <button type="button" id="btn-same-theme" class="btn" hidden>🎬 Un autre du même genre</button>
+</div>
+
+<div id="theme-bounce" class="roulette-theme-bounce" hidden>
+  <span class="filter-label">🎬 Un autre du même genre :</span>
+  <span id="theme-bounce-buttons"></span>
 </div>
 {% endblock %}
 

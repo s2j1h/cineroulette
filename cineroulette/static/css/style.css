@@ -560,6 +560,23 @@ a.hashtag:hover {
   flex-wrap: wrap;
   justify-content: center;
 }
+.roulette-theme-bounce {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1rem;
+}
+.roulette-theme-bounce .filter-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+#theme-bounce-buttons {
+  display: inline-flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 
 @media (prefers-color-scheme: light) {
   :root {

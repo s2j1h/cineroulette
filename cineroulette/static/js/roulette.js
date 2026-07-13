@@ -3,7 +3,8 @@
   const messageEl = document.getElementById("roulette-message");
   const btnRandom = document.getElementById("btn-random");
   const btnColor = document.getElementById("btn-same-color");
-  const btnTheme = document.getElementById("btn-same-theme");
+  const themeBounceEl = document.getElementById("theme-bounce");
+  const themeBounceButtons = document.getElementById("theme-bounce-buttons");
 
   const COULEUR_HEX = { rouge: "#c0392b", bleu: "#2765ff", "dorée": "#caa63d", argent: "#9aa0a6" };
 
@@ -50,8 +51,26 @@
     `;
 
     btnColor.hidden = false;
-    btnTheme.hidden = false;
-    btnTheme.disabled = !dvd.theme;
+
+    const tags = dvd.theme ? themeTags(dvd.theme) : [];
+    if (tags.length) {
+      themeBounceButtons.innerHTML = tags
+        .map((t) => `<button type="button" class="hashtag-btn" data-value="${escapeHtml(t)}">#${escapeHtml(t)}</button>`)
+        .join("");
+      themeBounceButtons.querySelectorAll(".hashtag-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!current) return;
+          const params = new URLSearchParams();
+          params.set("theme", btn.dataset.value);
+          params.set("exclude", current.id);
+          draw(params);
+        });
+      });
+      themeBounceEl.hidden = false;
+    } else {
+      themeBounceEl.hidden = true;
+      themeBounceButtons.innerHTML = "";
+    }
   }
 
   function draw(params) {
@@ -86,13 +105,6 @@
     draw(params);
   });
 
-  btnTheme.addEventListener("click", () => {
-    if (!current || !current.theme) return;
-    const tags = themeTags(current.theme);
-    if (!tags.length) return;
-    const params = new URLSearchParams();
-    params.set("theme", tags[0]);
-    params.set("exclude", current.id);
-    draw(params);
-  });
+  // Tirage immédiat au chargement de la page, sans attendre un clic.
+  draw(new URLSearchParams());
 })();
