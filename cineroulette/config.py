@@ -24,7 +24,7 @@ class Config:
 
     DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 
-    COULEURS_VALIDES = ("rouge", "bleu", "dorée", "argent")
+    COULEURS_VALIDES = ("rouge", "vert", "dorée", "argent")
 
     SSL_CERT_FILE = os.environ.get("SSL_CERT_FILE", "")
     SSL_KEY_FILE = os.environ.get("SSL_KEY_FILE", "")

@@ -81,7 +81,7 @@ def create_app(config_class=Config):
         return {
             "couleur_hex": {
                 "rouge": "#c0392b",
-                "bleu": "#2765ff",
+                "vert": "#3fae66",
                 "dorée": "#caa63d",
                 "argent": "#9aa0a6",
             }

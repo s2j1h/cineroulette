@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-COULEURS_VALIDES = ("rouge", "bleu", "dorée", "argent")
+COULEURS_VALIDES = ("rouge", "vert", "dorée", "argent")
 
 
 def utcnow():
@@ -38,7 +38,7 @@ class Dvd(db.Model):
 
     __table_args__ = (
         db.CheckConstraint(
-            "couleur IN ('rouge', 'bleu', 'dorée', 'argent')", name="ck_dvd_couleur"
+            "couleur IN ('rouge', 'vert', 'dorée', 'argent')", name="ck_dvd_couleur"
         ),
     )
 

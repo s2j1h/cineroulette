@@ -6,7 +6,7 @@
   const themeBounceEl = document.getElementById("theme-bounce");
   const themeBounceButtons = document.getElementById("theme-bounce-buttons");
 
-  const COULEUR_HEX = { rouge: "#c0392b", bleu: "#2765ff", "dorée": "#caa63d", argent: "#9aa0a6" };
+  const COULEUR_HEX = { rouge: "#c0392b", vert: "#3fae66", "dorée": "#caa63d", argent: "#9aa0a6" };
 
   let current = null;
 
