@@ -485,11 +485,23 @@ a.hashtag:hover {
 
 /* --- Scan --- */
 .scan-reader {
+  position: relative;
   max-width: 420px;
   margin: 0 auto 1rem;
   border-radius: var(--radius);
   overflow: hidden;
   background: #000;
+}
+.scan-reader video,
+.scan-reader canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.scan-reader canvas.drawingBuffer {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 .scan-status {
   text-align: center;

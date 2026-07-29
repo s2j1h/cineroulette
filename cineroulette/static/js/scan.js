@@ -3,47 +3,101 @@
   const statusEl = document.getElementById("scan-status");
   const eanForm = document.getElementById("ean-form");
   const eanInput = document.getElementById("ean-input");
-  if (!readerEl || typeof Html5Qrcode === "undefined") return;
+  if (!readerEl || typeof Quagga === "undefined") return;
+
+  // Un code n'est accepté qu'après avoir été lu plusieurs fois d'affilée à
+  // l'identique : réduit les faux positifs (chiffre mal lu ponctuellement)
+  // sans complexifier la config, technique recommandée par la doc Quagga2.
+  const REQUIRED_CONSECUTIVE_MATCHES = 3;
 
   let scanning = true;
-
-  const html5QrCode = new Html5Qrcode("reader", {
-    formatsToSupport: [Html5QrcodeSupportedFormats.EAN_13],
-    verbose: false,
-  });
+  let lastCode = null;
+  let repeatCount = 0;
 
   function submitEan(decodedText) {
     eanInput.value = decodedText;
     eanForm.submit();
   }
 
-  function onScanSuccess(decodedText) {
-    if (!scanning) return;
+  function onDetected(result) {
+    if (!scanning || !result || !result.codeResult) return;
+    if (result.codeResult.format !== "ean_13") return;
+
+    const code = result.codeResult.code;
+    if (code === lastCode) {
+      repeatCount += 1;
+    } else {
+      lastCode = code;
+      repeatCount = 1;
+    }
+    if (repeatCount < REQUIRED_CONSECUTIVE_MATCHES) return;
+
     scanning = false;
-    statusEl.textContent = `Code détecté : ${decodedText} — recherche en cours...`;
-    html5QrCode.stop().then(() => submitEan(decodedText)).catch(() => submitEan(decodedText));
+    statusEl.textContent = `Code détecté : ${code} — recherche en cours...`;
+    Quagga.offDetected(onDetected);
+    Quagga.offProcessed(onProcessed);
+    Quagga.stop().then(() => submitEan(code)).catch(() => submitEan(code));
   }
 
-  function onScanFailure() {
-    // Pas de code détecté sur cette frame : comportement normal pendant le scan.
+  function onProcessed(result) {
+    const ctx = Quagga.canvas && Quagga.canvas.ctx.overlay;
+    const canvas = Quagga.canvas && Quagga.canvas.dom.overlay;
+    if (!ctx || !canvas || !result) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (result.boxes) {
+      result.boxes
+        .filter((box) => box !== result.box)
+        .forEach((box) => Quagga.ImageDebug.drawPath(box, { x: 0, y: 1 }, ctx, { color: "#4f7cff", lineWidth: 2 }));
+    }
+    if (result.box) {
+      Quagga.ImageDebug.drawPath(result.box, { x: 0, y: 1 }, ctx, { color: "#3fae66", lineWidth: 2 });
+    }
+    if (result.codeResult && result.codeResult.code) {
+      Quagga.ImageDebug.drawPath(result.line, { x: "x", y: "y" }, ctx, { color: "#c0392b", lineWidth: 3 });
+    }
   }
 
-  Html5Qrcode.getCameras()
-    .then((cameras) => {
-      if (!cameras || !cameras.length) {
-        statusEl.textContent = "Aucune caméra détectée sur cet appareil.";
+  Quagga.init(
+    {
+      inputStream: {
+        type: "LiveStream",
+        target: readerEl,
+        // Codes-barres de jaquettes souvent petits/imprimés serré : résolution
+        // de traitement plus haute, cf. doc Quagga2 "Handle Difficult Barcodes".
+        size: 1280,
+        constraints: {
+          facingMode: "environment",
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+      },
+      locator: {
+        patchSize: "small",
+        halfSample: true,
+      },
+      decoder: {
+        readers: ["ean_reader"],
+      },
+      locate: true,
+    },
+    (err) => {
+      if (err) {
+        if (err.name === "NotFoundError") {
+          statusEl.textContent = "Aucune caméra détectée sur cet appareil.";
+        } else if (err.name === "NotAllowedError") {
+          statusEl.textContent = "Accès caméra refusé.";
+        } else {
+          statusEl.textContent = "Impossible d'accéder à la caméra : " + err;
+        }
+        console.error(err);
         return;
       }
-      const cameraId = cameras[cameras.length - 1].id;
-      html5QrCode
-        .start(cameraId, { fps: 10, qrbox: { width: 280, height: 120 } }, onScanSuccess, onScanFailure)
-        .catch((err) => {
-          statusEl.textContent = "Impossible d'accéder à la caméra : " + err;
-          console.error(err);
-        });
-    })
-    .catch((err) => {
-      statusEl.textContent = "Accès caméra refusé ou indisponible : " + err;
-      console.error(err);
-    });
+      Quagga.start();
+    }
+  );
+
+  Quagga.onDetected(onDetected);
+  Quagga.onProcessed(onProcessed);
 })();

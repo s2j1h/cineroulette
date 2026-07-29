@@ -19,8 +19,10 @@ accessible en réseau local ou via WireGuard.
 - Backend : Python 3.12 + Flask
 - ORM / DB : SQLAlchemy + SQLite (fichier unique)
 - Frontend : Jinja2 (rendu serveur) + CSS + JS vanilla
-- Scan code-barre : [html5-qrcode](https://github.com/mebjas/html5-qrcode) (vendorisé
-  localement dans `cineroulette/static/js/`, pas de dépendance CDN au runtime)
+- Scan code-barre : [Quagga2](https://github.com/ericblade/quagga2) (vendorisé
+  localement dans `cineroulette/static/js/`, pas de dépendance CDN au runtime) —
+  choisi pour l'EAN-13 après des soucis de fiabilité avec html5-qrcode/zxing-js
+  (non maintenus, faible taux de lecture réel)
 - Intégrations externes : UPCitemdb (identification par EAN), TMDB (métadonnées),
   OMDb (note IMDb)
 
