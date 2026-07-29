@@ -15,3 +15,11 @@ services:
       - ./cineroulette/static/covers:/app/cineroulette/static/covers
       - ./logs:/app/logs
     restart: unless-stopped
+    networks:
+      - default
+      - proxy
+
+networks:
+  proxy:
+    external: true
+    name: proxy
