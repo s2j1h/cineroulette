@@ -4,8 +4,12 @@ services:
     container_name: cine-roulette
     ports:
       - "5000:5000"
-    env_file:
-      - .env
+    environment:
+      - UPCITEMDB_API_KEY=${UPCITEMDB_API_KEY:-}
+      - TMDB_API_KEY=${TMDB_API_KEY:-}
+      - OMDB_API_KEY=${OMDB_API_KEY:-}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-me}
+      - FLASK_DEBUG=${FLASK_DEBUG:-0}
     volumes:
       - ./instance:/app/instance
       - ./cineroulette/static/covers:/app/cineroulette/static/covers
