@@ -13,6 +13,11 @@ anglais/résumé/genres/année/jaquette/note IMDb, puis soumet le formulaire
 d'ajout — la détection de doublon, le téléchargement de la jaquette et la
 validation sont gérés côté serveur, exactement comme un ajout manuel.
 
+Si la recherche renvoie plusieurs films portant exactement le même titre
+(même orthographe, ex : un original et son remake), la ligne n'est pas
+importée automatiquement : statut "plusieurs possibilités", à traiter à la
+main via /dvd/new. Ce cas est détecté aussi bien en dry-run qu'en import réel.
+
 Format du CSV attendu (avec en-tête, colonnes "titre" et "couleur", séparées
 par des points-virgules) :
 
@@ -35,6 +40,7 @@ import html
 import re
 import sys
 import time
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 
@@ -60,6 +66,15 @@ FLASH_ERROR_RE = re.compile(r'flash-error">([^<]*)</li>')
 
 def normalize_couleur(value):
     return COULEUR_SYNONYMES.get(value.strip().lower())
+
+
+def normalize_title(value):
+    """Normalise un titre pour comparaison (accents, casse, espaces) afin de
+    détecter des candidats de recherche partageant la même orthographe."""
+    if not value:
+        return ""
+    stripped = "".join(c for c in unicodedata.normalize("NFKD", value) if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", stripped).strip().lower()
 
 
 def extract_flash_errors(page_html):
@@ -94,6 +109,14 @@ def process_row(session, base_url, timeout, row_num, titre_brut, couleur_brute, 
         result["detail"] = "Aucun résultat TMDB pour ce titre"
         return result
 
+    top_title = normalize_title(candidates[0].get("titre_fr"))
+    same_spelling = [c for c in candidates if normalize_title(c.get("titre_fr")) == top_title]
+    if len(same_spelling) > 1:
+        options = ", ".join(f"« {c.get('titre_fr')} » ({c.get('annee') or '?'})" for c in same_spelling)
+        result["statut"] = "plusieurs possibilités"
+        result["detail"] = f"{len(same_spelling)} films trouvés avec le même titre, à ajouter à la main : {options}"
+        return result
+
     try:
         r = session.get(
             f"{base_url}/dvd/tmdb_pick", params={"movie_id": candidates[0]["id"]}, timeout=timeout
@@ -113,7 +136,8 @@ def process_row(session, base_url, timeout, row_num, titre_brut, couleur_brute, 
     if dry_run:
         result["statut"] = "simulé"
         result["detail"] = (
-            f"Correspondrait à « {detail.get('titre_fr')} » ({detail.get('annee') or '?'}) — rien envoyé (dry-run)"
+            f"Trouvé et unique : « {detail.get('titre_fr')} » ({detail.get('annee') or '?'}) — "
+            "prêt à être importé (rien envoyé, dry-run)"
         )
         return result
 

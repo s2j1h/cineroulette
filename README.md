@@ -191,10 +191,14 @@ Oblivion;argent
 Couleurs acceptées (insensible à la casse) : `rouge`, `vert`, `dorée` (ou `or`,
 `doré`), `argent`. Chaque film est recherché sur TMDB par titre (résumé, titre
 anglais, genres, année, jaquette, note IMDb via OMDb), avec la même détection
-de doublon que l'ajout manuel. Un fichier `<nom>_resultat_<date>.csv` est généré
-à côté du CSV d'entrée, détaillant le statut de chaque ligne (importé / doublon
-/ introuvable / erreur) — les titres non trouvés automatiquement restent à
-ajouter à la main via `/dvd/new`.
+de doublon que l'ajout manuel. Si la recherche renvoie plusieurs films avec
+exactement le même titre (un original et son remake par exemple), la ligne
+n'est pas importée automatiquement (statut `plusieurs possibilités`) — même
+en dry-run, où le rapport précise déjà si un titre est trouvé et unique
+(prêt à être importé) ou ambigu. Un fichier `<nom>_resultat_<date>.csv` est
+généré à côté du CSV d'entrée, détaillant le statut de chaque ligne (importé
+/ doublon / plusieurs possibilités / introuvable / erreur) — les titres non
+importés automatiquement restent à ajouter à la main via `/dvd/new`.
 
 ## Structure du projet
 
