@@ -58,6 +58,13 @@ def _known_themes():
     return sorted(counter.items())
 
 
+def _couleur_counts():
+    """Nombre de DVD par couleur sur l'ensemble de la collection (indépendant
+    des filtres actifs, pour rester stable pendant la recherche/filtrage)."""
+    rows = db.session.query(Dvd.couleur, db.func.count(Dvd.id)).group_by(Dvd.couleur).all()
+    return dict(rows)
+
+
 def _find_duplicate(ean=None, tmdb_id=None, exclude_id=None):
     """Détecte un doublon. L'EAN identifie un exemplaire physique précis (deux
     éditions différentes du même film ont des EAN différents et ne sont donc
@@ -91,7 +98,9 @@ def list_dvd():
     pagination = _filtered_query(q, couleur, theme).paginate(page=page, per_page=PER_PAGE, error_out=False)
 
     if _is_fetch_request():
-        return render_template("_dvd_grid.html", dvds=pagination.items, q=q, couleur=couleur, theme=theme)
+        return render_template(
+            "_dvd_grid.html", dvds=pagination.items, pagination=pagination, q=q, couleur=couleur, theme=theme
+        )
 
     return render_template(
         "dvd_list.html",
@@ -102,6 +111,8 @@ def list_dvd():
         theme=theme,
         themes=_known_themes(),
         couleurs=current_app.config["COULEURS_VALIDES"],
+        total_count=Dvd.query.count(),
+        couleur_counts=_couleur_counts(),
     )
 
 
