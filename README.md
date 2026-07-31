@@ -200,6 +200,27 @@ généré à côté du CSV d'entrée, détaillant le statut de chaque ligne (imp
 / doublon / plusieurs possibilités / introuvable / erreur) — les titres non
 importés automatiquement restent à ajouter à la main via `/dvd/new`.
 
+## Sauvegarde titre/couleur en CSV
+
+Pour disposer d'un filet de sécurité rapide à reconstruire, `scripts/backup_csv.py`
+parcourt la collection via l'API HTTP (même principe que l'import : aucun accès
+direct à la base ou au disque) et écrit un CSV `titre;couleur` — exactement le
+format attendu par `scripts/import_csv.py` :
+
+```bash
+python scripts/backup_csv.py --base-url http://localhost:5000
+python scripts/backup_csv.py --base-url https://cineroulette.home -o backup.csv
+```
+
+Par défaut, le fichier est nommé `backup_<date>.csv` dans le répertoire courant.
+`--insecure` a le même effet que pour le script d'import.
+
+⚠️ Ce n'est **pas** une sauvegarde complète : seuls le titre et la couleur sont
+conservés. En cas de restauration via `import_csv.py`, jaquette, résumé, année et
+note IMDb sont re-récupérés depuis TMDB — potentiellement une édition légèrement
+différente de l'originale — et les titres ambigus ou introuvables redeviennent à
+traiter à la main comme n'importe quel import.
+
 ## Structure du projet
 
 ```
