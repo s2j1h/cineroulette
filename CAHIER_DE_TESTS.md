@@ -63,6 +63,16 @@ app.config["COVERS_DIR"] = Path("/tmp/cineroulette_test_covers")
 app.config["COVERS_DIR"].mkdir(parents=True, exist_ok=True)
 ```
 
+**Cette règle s'applique à tout code qui télécharge une jaquette, pas
+seulement aux routes web** — l'erreur s'est reproduite une deuxième fois lors
+du test d'une première version de `scripts/import_csv.py`, qui accédait
+directement à `COVERS_DIR`. Ce script a depuis été réécrit pour ne piloter
+l'application que via ses routes HTTP (`--base-url`) : il n'a plus aucun accès
+direct au disque ou à la base. La règle d'isolement s'applique donc à
+l'**instance ciblée par `--base-url`** — toujours la faire pointer vers un
+serveur scratch temporaire (base + `COVERS_DIR` isolés), jamais vers le
+serveur réel de l'utilisateur.
+
 ### 1.4 Jeux de données de référence (EAN réels validés)
 
 | EAN | Titre UPCitemdb brut | Après nettoyage | Résultat TMDB attendu |
@@ -302,7 +312,7 @@ validée** et creuser avant d'aller plus loin.
 
 ---
 
-## 9. Ajout manuel via recherche TMDB (fonctionnel)
+## 9. Ajout manuel via recherche TMDB & import en masse (fonctionnel)
 
 **TF-501 — Recherche et sélection d'un film**
 - Priorité : Haute · Exécutant : Claude (auto)
@@ -312,6 +322,29 @@ validée** et creuser avant d'aller plus loin.
 **TF-502 — Widget de recherche présent uniquement en mode création**
 - Priorité : Basse · Exécutant : Claude (auto)
 - Résultat attendu : le bloc `#tmdb-query` n'apparaît pas sur `/dvd/<id>/edit` (pas de champ `tmdb_id` modifiable en édition)
+
+**TF-503 — `scripts/import_csv.py` : import réel depuis un CSV**
+- Priorité : Haute · Exécutant : Claude (auto, **contre une instance scratch dédiée** — `--base-url` pointé sur un serveur temporaire avec base et `COVERS_DIR` isolés, jamais sur le serveur réel de l'utilisateur ; voir §1.3)
+- Préconditions : le script ne fait **aucun accès direct** à la base/au disque — il pilote l'application uniquement via `/dvd/tmdb_search`, `/dvd/tmdb_pick`, `/dvd/new`, exactement comme un navigateur. Fonctionne donc identiquement en local ou contre le conteneur Docker réel, pourvu que `--base-url` soit atteignable.
+- Données de test :
+  ```
+  titre,couleur
+  Matrix,rouge
+  Le Roi Lion,or
+  Matrix,rouge
+  Inception,violet
+  zzzzxxxxyyyyfilmquinexistepas,argent
+  ```
+- Résultat attendu : ligne 1 → `importé` (Matrix, couleur=rouge, tmdb_id renseigné, jaquette téléchargée côté serveur) ; ligne 2 → `importé` avec couleur normalisée `or` → `dorée` ; ligne 3 → `doublon` (message repris du flash `error` du serveur : « Ce film est déjà dans la collection... ») ; ligne 4 → `erreur` (couleur "violet" non reconnue, aucun appel réseau émis) ; ligne 5 → `introuvable` (aucun résultat TMDB) ; un fichier `<nom>_resultat_<date>.csv` est généré avec le détail par ligne
+
+**TF-504 — `scripts/import_csv.py --dry-run`**
+- Priorité : Moyenne · Exécutant : Claude (auto)
+- Résultat attendu : mêmes correspondances trouvées et affichées (recherche + détail TMDB réellement appelés), mais **aucun `POST /dvd/new` n'est envoyé** ; les doublons au sein du même lot ne sont pas détectés en dry-run (la détection dépend d'un enregistrement déjà créé côté serveur, qui n'a jamais lieu ici) — comportement attendu, à ne pas confondre avec un bug
+
+**TT-701 — `scripts/import_csv.py` : application injoignable**
+- Priorité : Moyenne · Exécutant : Claude (auto)
+- Étapes : lancer le script avec `--base-url` pointant vers un port fermé
+- Résultat attendu : message clair "Impossible de joindre l'application sur ..." et sortie immédiate (code 1), sans tenter d'appeler TMDB ligne par ligne
 
 ---
 
@@ -493,6 +526,7 @@ validée** et creuser avant d'aller plus loin.
 - Favicon + icône de marque
 - Couleur "bleu" renommée en "vert" (migration de données incluse)
 - Scanner caméra : migration html5-qrcode → Quagga2
+- Script d'import en masse depuis un CSV (`scripts/import_csv.py`)
 
 *Ce document doit être mis à jour (nouveaux cas de test) à chaque fois qu'une
 fonctionnalité notable est ajoutée ou modifiée — pas seulement rejoué à

@@ -162,6 +162,40 @@ l'application (voir section suivante).
   (mkcert, auto-signé, ou Let's Encrypt via DNS interne) devant l'application pour
   servir en HTTPS.
 
+## Import en masse depuis un CSV
+
+Pour remplir rapidement la collection à partir d'une simple liste (titre +
+couleur), sans passer par le scan un par un. Le script ne touche ni la base ni
+le disque directement : il pilote l'application via ses routes HTTP existantes
+(comme le ferait un navigateur), donc utilisable aussi bien contre une instance
+locale que contre l'application déployée dans son conteneur Docker :
+
+```bash
+python scripts/import_csv.py films.csv --base-url http://localhost:5000
+python scripts/import_csv.py films.csv --base-url https://cineroulette.home --dry-run
+```
+
+`--dry-run` prévisualise les correspondances trouvées sans rien envoyer.
+`--insecure` ignore la vérification du certificat TLS (utile avec un
+certificat local type mkcert non reconnu par ce script).
+
+Format attendu (avec en-tête) :
+
+```
+titre,couleur
+Matrix,rouge
+Le Roi Lion,or
+Oblivion,argent
+```
+
+Couleurs acceptées (insensible à la casse) : `rouge`, `vert`, `dorée` (ou `or`,
+`doré`), `argent`. Chaque film est recherché sur TMDB par titre (résumé, titre
+anglais, genres, année, jaquette, note IMDb via OMDb), avec la même détection
+de doublon que l'ajout manuel. Un fichier `<nom>_resultat_<date>.csv` est généré
+à côté du CSV d'entrée, détaillant le statut de chaque ligne (importé / doublon
+/ introuvable / erreur) — les titres non trouvés automatiquement restent à
+ajouter à la main via `/dvd/new`.
+
 ## Structure du projet
 
 ```
