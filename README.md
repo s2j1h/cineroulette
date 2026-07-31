@@ -179,13 +179,13 @@ python scripts/import_csv.py films.csv --base-url https://cineroulette.home --dr
 `--insecure` ignore la vérification du certificat TLS (utile avec un
 certificat local type mkcert non reconnu par ce script).
 
-Format attendu (avec en-tête) :
+Format attendu (avec en-tête, colonnes séparées par des points-virgules) :
 
 ```
-titre,couleur
-Matrix,rouge
-Le Roi Lion,or
-Oblivion,argent
+titre;couleur
+Matrix;rouge
+Le Roi Lion;or
+Oblivion;argent
 ```
 
 Couleurs acceptées (insensible à la casse) : `rouge`, `vert`, `dorée` (ou `or`,

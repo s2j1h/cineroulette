@@ -13,12 +13,13 @@ anglais/résumé/genres/année/jaquette/note IMDb, puis soumet le formulaire
 d'ajout — la détection de doublon, le téléchargement de la jaquette et la
 validation sont gérés côté serveur, exactement comme un ajout manuel.
 
-Format du CSV attendu (avec en-tête, colonnes "titre" et "couleur") :
+Format du CSV attendu (avec en-tête, colonnes "titre" et "couleur", séparées
+par des points-virgules) :
 
-    titre,couleur
-    Matrix,rouge
-    Le Roi Lion,or
-    Oblivion,argent
+    titre;couleur
+    Matrix;rouge
+    Le Roi Lion;or
+    Oblivion;argent
 
 Couleurs acceptées (insensible à la casse) : rouge, vert, dorée (ou "or",
 "doré"), argent.
@@ -174,7 +175,7 @@ def main():
         sys.exit(1)
 
     with args.csv_path.open(encoding="utf-8-sig", newline="") as f:
-        reader = csv.DictReader(f)
+        reader = csv.DictReader(f, delimiter=";")
         columns = {(name or "").strip().lower(): name for name in (reader.fieldnames or [])}
         if "titre" not in columns or "couleur" not in columns:
             print("Le CSV doit contenir les colonnes 'titre' et 'couleur' (avec en-tête).")
