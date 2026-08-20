@@ -24,6 +24,11 @@
     </p>
     {% endif %}
     {% if dvd.resume %}<p class="resume">{{ dvd.resume }}</p>{% endif %}
+
+    {% if dvd.tmdb_id %}
+    <div class="streaming" data-streaming-tmdb="{{ dvd.tmdb_id }}"></div>
+    {% endif %}
+
     <p class="added">Ajouté le {{ dvd.date_ajout.strftime("%d/%m/%Y") }}</p>
 
     <div class="actions">
@@ -34,4 +39,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/streaming.js') }}"></script>
 {% endblock %}

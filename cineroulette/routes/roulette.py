@@ -3,6 +3,7 @@ import logging
 from flask import Blueprint, jsonify, render_template, request, url_for
 
 from ..models import Dvd, db
+from ..services import streaming
 
 logger = logging.getLogger(__name__)
 
@@ -52,3 +53,10 @@ def random_dvd():
     data["jaquette_url"] = url_for("static", filename=dvd.jaquette_path) if dvd.jaquette_path else None
     logger.info("Roulette : tirage id=%s titre=%s", dvd.id, dvd.titre_fr)
     return jsonify(data)
+
+
+@roulette_bp.route("/streaming/<int:tmdb_id>")
+def streaming_providers(tmdb_id):
+    """Plateformes d'abonnement (région FR) où le film est disponible. Appelé en
+    différé par la fiche détail et la roulette pour ne pas bloquer l'affichage."""
+    return jsonify({"providers": streaming.get_flatrate_fr(tmdb_id)})

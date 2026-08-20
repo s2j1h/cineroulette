@@ -46,6 +46,7 @@ class Dvd(db.Model):
         return {
             "id": self.id,
             "ean": self.ean,
+            "tmdb_id": self.tmdb_id,
             "titre_fr": self.titre_fr,
             "titre_en": self.titre_en,
             "resume": self.resume,
@@ -56,6 +57,24 @@ class Dvd(db.Model):
             "couleur": self.couleur,
             "date_ajout": self.date_ajout.isoformat() if self.date_ajout else None,
         }
+
+
+class StreamingCache(db.Model):
+    """Cache local des plateformes de streaming (flatrate/abonnement, région FR)
+    renvoyées par TMDB (données JustWatch), pour éviter un appel réseau à chaque
+    affichage d'un film et rester sous le rate-limit de l'API.
+
+    Les disponibilités évoluant régulièrement, une entrée est rafraîchie après
+    STREAMING_CACHE_HOURS (voir config.py). `providers` est une liste JSON
+    d'objets {"name", "logo_url"}, éventuellement vide (film non disponible en
+    streaming) — cet état négatif est mis en cache lui aussi."""
+
+    __tablename__ = "streaming_cache"
+
+    id = db.Column(db.Integer, primary_key=True)
+    tmdb_id = db.Column(db.Integer, unique=True, nullable=False, index=True)
+    providers = db.Column(db.Text, nullable=False, default="[]")
+    fetched_at = db.Column(db.DateTime, nullable=False, default=utcnow)
 
 
 class QuotaCounter(db.Model):
