@@ -22,6 +22,12 @@ class Config:
     UPCITEMDB_DAILY_QUOTA = 100
     UPCITEMDB_QUOTA_WARNING_THRESHOLD = 10
 
+    # Streaming (TMDB watch/providers, données JustWatch) : on ne retient que la
+    # région FR et les plateformes d'abonnement (flatrate). Cache rafraîchi
+    # toutes les 48 h car les disponibilités changent régulièrement.
+    STREAMING_REGION = "FR"
+    STREAMING_CACHE_HOURS = 48
+
     DEBUG = os.environ.get("FLASK_DEBUG", "0") == "1"
 
     COULEURS_VALIDES = ("rouge", "vert", "dorée", "argent")

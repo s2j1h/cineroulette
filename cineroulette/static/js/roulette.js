@@ -45,10 +45,15 @@
           </p>
           ${dvd.theme ? `<p class="hashtags">${themeTags(dvd.theme).map((t) => `<span class="hashtag">#${escapeHtml(t)}</span>`).join("")}</p>` : ""}
           ${dvd.resume ? `<p class="resume">${escapeHtml(dvd.resume)}</p>` : ""}
+          <div class="streaming" id="roulette-streaming"></div>
           <p><a href="/dvd/${dvd.id}">Voir la fiche complète →</a></p>
         </div>
       </div>
     `;
+
+    if (window.CineStreaming) {
+      window.CineStreaming.render(document.getElementById("roulette-streaming"), dvd.tmdb_id);
+    }
 
     btnColor.hidden = false;
 

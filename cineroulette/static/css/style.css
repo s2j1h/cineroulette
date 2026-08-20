@@ -614,6 +614,42 @@ a.hashtag:hover {
   flex-wrap: wrap;
 }
 
+.streaming {
+  margin: 1rem 0 0;
+}
+.streaming-label {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.streaming-none,
+.streaming-loading {
+  font-style: italic;
+}
+.streaming-logos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+/* Sélecteur à double classe : nécessaire pour l'emporter sur `.roulette-card
+   img` (jaquette, largeur 220px) dont la spécificité dépasserait `.streaming-logo`
+   seul, ce qui étirerait les logos dans la carte roulette. */
+.streaming-logos .streaming-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+.streaming-name {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.85rem;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     --bg: #f6f7fb;

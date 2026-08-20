@@ -7,6 +7,7 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://api.themoviedb.org/3"
 POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"
+WATCH_PROVIDER_LOGO_BASE_URL = "https://image.tmdb.org/t/p/w92"
 
 
 def _get(path, params):
@@ -64,6 +65,18 @@ def get_movie_detail(movie_id):
         "jaquette_url": f"{POSTER_BASE_URL}{poster_path}" if poster_path else None,
         "tmdb_id": data.get("id"),
     }
+
+
+def get_watch_providers(movie_id):
+    """Retourne le dict `results` de TMDB (une entrée par pays) pour les
+    plateformes de visionnage, ou None en cas d'erreur réseau/API.
+
+    Un film sans aucune disponibilité renvoie un dict vide (pas None) : l'absence
+    de plateforme est une information valide, à distinguer d'un échec d'appel."""
+    data = _get(f"/movie/{movie_id}/watch/providers", {})
+    if data is None:
+        return None
+    return data.get("results", {})
 
 
 def get_external_ids(movie_id):

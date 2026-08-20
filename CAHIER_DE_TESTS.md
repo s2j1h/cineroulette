@@ -383,6 +383,55 @@ validée** et creuser avant d'aller plus loin.
 
 ---
 
+## 10bis. Disponibilité streaming (TMDB watch/providers — fonctionnel + technique)
+
+Contexte : pour chaque film lié à TMDB, on affiche les plateformes d'abonnement
+(**flatrate**) où il est disponible **en France** (`STREAMING_REGION = "FR"`),
+via l'endpoint TMDB `/movie/{id}/watch/providers` (données JustWatch). Ni
+location, ni achat, ni lien « Regarder ». Endpoint applicatif :
+`GET /streaming/<tmdb_id>` → `{"providers": [{"name", "logo_url"}, ...]}`.
+Cache local en base (`streaming_cache`), rafraîchi après `STREAMING_CACHE_HOURS`
+(48 h par défaut).
+
+**TF-610 — Affichage des plateformes sur la fiche détail**
+- Priorité : Critique · Exécutant : Claude (auto, navigateur automatisé)
+- Données de test : un DVD avec `tmdb_id` disponible en flatrate FR (ex. Fight Club, tmdb_id 550)
+- Résultat attendu : sous le résumé, label « 📺 En streaming (abonnement) » suivi d'une rangée de logos de plateformes
+
+**TF-611 — Affichage des plateformes dans la carte roulette**
+- Priorité : Haute · Exécutant : Claude (auto, navigateur automatisé)
+- Résultat attendu : même bloc streaming dans la carte tirée ; les logos sont de petits carrés uniformes (40 px), non étirés par la règle de jaquette `.roulette-card img`
+
+**TF-612 — Film indisponible en streaming FR**
+- Priorité : Haute · Exécutant : Claude (auto)
+- Résultat attendu : message clair « 📺 Pas disponible en streaming (abonnement) » (pas de rangée de logos vide)
+
+**TF-613 — Film sans `tmdb_id`**
+- Priorité : Haute · Exécutant : Claude (auto, navigateur automatisé)
+- Résultat attendu : aucune section streaming affichée (état inconnu, à distinguer d'une indisponibilité), ni sur la fiche ni dans la roulette
+
+**TT-210 — Filtrage région + catégorie**
+- Priorité : Critique · Exécutant : Claude (auto)
+- Résultat attendu : seule la clé `FR` de `results` est lue, et seule la catégorie `flatrate` est retenue (les entrées `rent`/`buy`/`ads`/`free` et les autres pays sont ignorés) ; tri par `display_priority` croissant
+
+**TT-210bis — Variantes/revendeurs écartés**
+- Priorité : Haute · Exécutant : Claude (auto)
+- Résultat attendu : les entrées faisant doublon avec la plateforme mère sont retirées (marqueurs `_VARIANT_MARKERS` : « with ads », « amazon channel », « apple tv channel », « channel ») ; ex. « Netflix Standard with Ads » et « HBO Max Amazon Channel » n'apparaissent pas ; dédoublonnage par nom
+
+**TT-211 — Cache 48 h**
+- Priorité : Haute · Exécutant : Claude (auto)
+- Résultat attendu : un 1ᵉʳ appel écrit une ligne `streaming_cache` ; un 2ᵉ appel dans les 48 h ne redéclenche pas d'appel TMDB (valeur servie depuis le cache) ; l'état négatif (liste vide) est mis en cache lui aussi
+
+**TT-212 — Robustesse en cas d'échec TMDB**
+- Priorité : Moyenne · Exécutant : Claude (auto)
+- Résultat attendu : sur échec réseau/API, on sert le cache périmé s'il existe, sinon une liste vide ; jamais d'erreur 500
+
+**TT-213 — Isolation lors des tests (règle d'or)**
+- Priorité : Critique · Exécutant : Claude (auto)
+- Rappel : `streaming_cache` est en base — tout test écrivant dedans doit isoler `SQLALCHEMY_DATABASE_URI` **avant** `create_all()` (via un `config_class` passé à `create_app`, pas une surcharge post-création qui ne rebinde pas le moteur) **et** `COVERS_DIR`
+
+---
+
 ## 11. Scan caméra — Quagga2 (technique + manuel)
 
 **TT-201 — Chargement de la librairie sans erreur JS**
