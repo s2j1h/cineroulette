@@ -485,6 +485,14 @@ Cache local en base (`streaming_cache`), rafraîchi après `STREAMING_CACHE_HOUR
 - Étapes : `GET /dvd/999999`
 - Résultat attendu : HTTP 404 (`get_or_404`)
 
+**TT-306 — Anti-cache des fichiers statiques (`?v=<mtime>`)**
+- Priorité : Haute · Exécutant : Claude (auto)
+- Contexte : `dated_url_for` (dans `__init__.py`) suffixe chaque asset statique de sa date de modification, pour éviter que navigateurs/proxys servent un CSS/JS périmé après mise à jour
+- Étapes / résultat attendu :
+  - le HTML servi porte `css/style.css?v=<entier>` (idem JS, favicons) ;
+  - modifier un fichier statique change son suffixe `?v=` ;
+  - un asset introuvable (ex. jaquette supprimée) est rendu **sans** suffixe (repli `OSError`) et **ne casse pas** la page (pas de 500)
+
 ---
 
 ## 13. Journalisation (technique)

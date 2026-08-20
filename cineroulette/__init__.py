@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # depuis os.environ à l'import du module, donc le .env doit déjà être en place.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from flask import Flask
+from flask import Flask, url_for
 
 from .config import Config
 from .models import db, parse_themes, QuotaCounter
@@ -86,6 +86,27 @@ def create_app(config_class=Config):
                 "argent": "#9aa0a6",
             }
         }
+
+    def dated_url_for(endpoint, **values):
+        """Ajoute un suffixe `?v=<mtime>` aux URLs de fichiers statiques pour
+        forcer navigateurs et proxys à re-télécharger un asset dès qu'il change
+        (fini les CSS/JS périmés après une mise à jour). Le suffixe évolue avec
+        la date de modification du fichier ; s'il est introuvable, on renvoie
+        l'URL nue sans échouer."""
+        if endpoint == "static":
+            filename = values.get("filename")
+            if filename:
+                file_path = os.path.join(app.static_folder, filename)
+                try:
+                    values["v"] = int(os.stat(file_path).st_mtime)
+                except OSError:
+                    pass
+        return url_for(endpoint, **values)
+
+    @app.context_processor
+    def override_url_for():
+        # Remplace url_for dans les templates par la variante horodatée ci-dessus.
+        return {"url_for": dated_url_for}
 
     logging.getLogger(__name__).info("Application Ciné-Roulette démarrée (debug=%s)", app.debug)
 
