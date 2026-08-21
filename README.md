@@ -18,13 +18,14 @@ accessible en réseau local ou via WireGuard.
 
 - Backend : Python 3.12 + Flask
 - ORM / DB : SQLAlchemy + SQLite (fichier unique)
-- Frontend : Jinja2 (rendu serveur) + CSS + JS vanilla
+- Frontend : Jinja2 (rendu serveur) + CSS + JS vanilla, avec anti-cache
+  (`?v=<mtime>`) sur les assets statiques pour éviter tout CSS/JS périmé
 - Scan code-barre : [Quagga2](https://github.com/ericblade/quagga2) (vendorisé
   localement dans `cineroulette/static/js/`, pas de dépendance CDN au runtime) —
   choisi pour l'EAN-13 après des soucis de fiabilité avec html5-qrcode/zxing-js
   (non maintenus, faible taux de lecture réel)
-- Intégrations externes : UPCitemdb (identification par EAN), TMDB (métadonnées),
-  OMDb (note IMDb)
+- Intégrations externes : UPCitemdb (identification par EAN), TMDB (métadonnées
+  + disponibilité streaming via JustWatch), OMDb (note IMDb)
 
 Aucune authentification n'est implémentée (usage mono-utilisateur, réseau local).
 
@@ -42,6 +43,13 @@ Aucune authentification n'est implémentée (usage mono-utilisateur, réseau loc
   sans code-barre).
 - **Ciné-Roulette** (`/roulette`) : tirage aléatoire d'un DVD, avec rebond possible
   sur la même couleur ou le même genre que le film tiré.
+- **Disponibilité en streaming** : sur la fiche DVD et dans la carte roulette,
+  affichage des plateformes d'abonnement (Netflix, Disney+, Prime…) où le film
+  est disponible **en France**, via l'API TMDB (données JustWatch). Uniquement
+  l'abonnement (ni location, ni achat), variantes/revendeurs écartés, résultat
+  mis en cache 48 h (table `streaming_cache`). Chargé en différé (endpoint
+  `/streaming/<tmdb_id>`) pour ne pas ralentir l'affichage ; rien n'est montré
+  pour un film sans `tmdb_id`.
 - **Quota UPCitemdb** : compteur visible sur la page de scan (~100 requêtes/jour,
   tier gratuit), avec avertissement dans les logs sous 10 requêtes restantes.
 - **Logs** : fichier `logs/app.log` avec rotation, format
@@ -225,19 +233,21 @@ traiter à la main comme n'importe quel import.
 
 ```
 cineroulette/
-├── config.py              # configuration (clés API, chemins, couleurs valides)
-├── models.py               # modèle Dvd + compteur de quota UPCitemdb
+├── __init__.py             # create_app, création des tables, anti-cache statique
+├── config.py              # configuration (clés API, chemins, couleurs, streaming)
+├── models.py               # modèles Dvd, StreamingCache + compteur de quota UPCitemdb
 ├── routes/
 │   ├── dvd.py               # CRUD, scan, recherche manuelle TMDB
-│   └── roulette.py          # page roulette + /random
+│   └── roulette.py          # page roulette, /random, /streaming/<tmdb_id>
 ├── services/
 │   ├── upcitemdb.py, tmdb.py, omdb.py   # intégrations externes
+│   ├── streaming.py         # plateformes de streaming (TMDB/JustWatch) + cache 48 h
 │   ├── quota.py             # suivi local du quota UPCitemdb
 │   └── covers.py            # téléchargement/conversion des jaquettes
 ├── templates/                # Jinja2
 └── static/
     ├── css/style.css
-    ├── js/                   # recherche live, scan, roulette, recherche TMDB
+    ├── js/                   # recherche live, scan, roulette, recherche TMDB, streaming
     └── covers/                # jaquettes téléchargées (<id>.jpg)
 run.py                        # point d'entrée (dev + gunicorn)
 Dockerfile / docker-compose.yml
@@ -248,6 +258,9 @@ Dockerfile / docker-compose.yml
 - Pas d'authentification multi-utilisateurs.
 - Pas d'export/import de collection.
 - Pas de statistiques de collection.
+- Disponibilité streaming issue de TMDB (données JustWatch recopiées avec ~24-48 h
+  de décalage) : elle peut être incomplète ou en retard par rapport à
+  justwatch.com, et se limite à la France + à l'abonnement.
 - Pas de protection CSRF sur les formulaires (acceptable pour un usage
   mono-utilisateur en réseau local ; à ajouter si l'app devait s'ouvrir plus
   largement).
