@@ -5,6 +5,9 @@ scan de code-barre avec enrichissement automatique des métadonnées (UPCitemdb 
 TMDB → OMDb), catégorisation par couleur, recherche, et une fonctionnalité de
 découverte aléatoire ("roulette").
 
+<img width="2793" height="1478" alt="image" src="https://github.com/user-attachments/assets/6ab88e6a-0c35-46b8-8211-c0269e57f40f" />
+
+
 Usage prévu : mono-utilisateur, sur un homelab local (LXC Proxmox ou Docker),
 accessible en réseau local ou via WireGuard.
 
